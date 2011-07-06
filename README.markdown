@@ -21,7 +21,7 @@ tree using the jsTree jquery plugin.
 
 ## Usage example ##
 ```python
-from apps.filtrate.filters import TreeFilter
+from filtrate.filters import TreeFilter
 
 # The Filter.
 from itertools import groupby
@@ -37,7 +37,6 @@ class CompanyDepartmentFilter(TreeFilter):
         return groupby(qs, lambda obj: getattr(obj, 'company'))
 
 # The model.
-
 from filtrate import register_filter
 class Case(Model):
     ...
