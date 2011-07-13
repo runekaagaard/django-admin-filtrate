@@ -36,7 +36,7 @@ class Case(Model):
 ## DateRangeFilter ##
 Filters results in a given date range using the jQueryUI datepicker plugin.
 
-### Example ### 
+### Example ###
 ```python
 # The Filter.
 from filtrate.filters import DateRangeFilter
