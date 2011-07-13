@@ -1,29 +1,18 @@
 ## About ##
+This Django app makes it easier to create custom filters in the change list of
+Django Admin and supplies a `TreeFilter` and a `DateRangeFilter` too. Se below.
 
-So far only supplies two classes: The base class `FiltrateFilter` that lets you
-create your own custom filters and `TreeFilter` that creates a cool expandable
-tree using the jsTree jquery plugin.
+## The FiltrateFilter ##
+The base class that adds support for custom html in the content of the filter
+and for using `Media()` classes.
 
-## Installation ##
+## TreeFilter ##
+A recursive tree filter using the excellent library. http://www.jstree.com/. 
 
-* Clone the repo and symlink or copy the "filtrate" folder to your apps folder.
-* Add `filtrate` to your installed apps.
-* Add the "filtrate/templates" to your template dirs.
-* Symlink or copy the "filtrate/static/filtrate" folder to your static folder.
-* Make sure the following javascript files is included on the change list view.
-  This can be done by overriding the "admin/change_list.html" template and
-  adding something like:
-
-```html
-<script type="text/javascript" src="/static/filtrate/js/jstree/jquery.jstree.js"></script>
-<script type="text/javascript" src="/static/filtrate/js/filtertree.js"></script>
-```
-
-## Usage example ##
+### Example ###
 ```python
-from filtrate.filters import TreeFilter
-
 # The Filter.
+from filtrate.filters import TreeFilter
 from itertools import groupby
 class CompanyDepartmentFilter(TreeFilter):
     field_name = "client__department__id__in"
@@ -40,6 +29,41 @@ class CompanyDepartmentFilter(TreeFilter):
 from filtrate import register_filter
 class Case(Model):
     ...
-    register_filter(client, CompanyDepartmentFilter)
+    register_filter(field_name, CompanyDepartmentFilter)
 	...
 ```
+
+## DateRangeFilter ##
+Filters results in a given date range using the jQueryUI datepicker plugin.
+
+### Example ### 
+```python
+# The Filter.
+from filtrate.filters import DateRangeFilter
+
+class CaseLicenseStartDateFilter(DateRangeFilter):
+    field_name = 'caselicense__start_date'
+    
+    def get_title(self):
+        return "By license start date"
+
+# The model.
+from filtrate import register_filter
+class Case(Model):
+    ...
+    register_filter(field_name, CaseLicenseStartDateFilter)
+	...
+```
+
+## Installation ##
+
+* Clone the repo and symlink or copy the "filtrate" folder to your apps folder.
+* Add `filtrate` to your installed apps.
+* Add the "filtrate/templates" to your template dirs.
+
+### Static files ###
+
+FlexSelect requires "django.contrib.staticfiles" installed to work out of the 
+box. If it is not then the js and css files must be installed manually. 
+Read more about "django.contrib.staticfiles" at 
+https://docs.djangoproject.com/en/1.3/ref/contrib/staticfiles/.

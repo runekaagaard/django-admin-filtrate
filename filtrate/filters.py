@@ -1,10 +1,17 @@
 import json
+from datetime import datetime
 
 from django.contrib.admin.filterspecs import FilterSpec
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.datastructures import MultiValueDictKeyError
 from django.core.exceptions import ImproperlyConfigured
+from django.utils.translation import ugettext_lazy as _
+from django.forms.widgets import Media, MEDIA_TYPES, Input, HiddenInput
+from django import forms as f
+from django.template.defaultfilters import date
+from django.utils.formats import date_format
+from django.conf import settings
 
 class FiltrateFilter(FilterSpec):
     """
@@ -17,16 +24,33 @@ class FiltrateFilter(FilterSpec):
     def __init__(self, f, request, params, model, model_admin):
         super(FiltrateFilter, self).__init__(f, request, params, model, 
                                              model_admin)
+        self._add_media(model_admin)
         self.request = request
         self.params = params
         self.model = model
         self.model_admin = model_admin
+        
     
-    def _form_duplicate_getparams(self):
+    class Media():
+        js = ( 'filtrate/js/filtrate.js',)
+        css = { 'all': ('filtrate/css/filtrate.css',) }
+        
+    def _add_media(self, model_admin):
+        def _get_media(obj):
+            return Media(media=getattr(obj, 'Media', None))
+        
+        media = _get_media(model_admin) + _get_media(FiltrateFilter)\
+                + _get_media(self)
+                
+        for name in MEDIA_TYPES:
+            setattr(model_admin.Media, name, getattr(media, "_" + name))
+        
+    def _form_duplicate_getparams(self, omitted_fields):
         """Replicates the get parameters as hidden form fields."""
         s = '<input type="hidden" name="%s" value="%s"/>'
+        _omitted_fields = tuple(omitted_fields) + ('e',)
         return "".join([s % (k,v) for k,v in self.request.GET.iteritems() 
-                        if k not in ('e', self.field_name)])
+                        if k not in _omitted_fields])
         
     def title(self):
         """Triggers the alternate rendering in "filter.html"."""
@@ -52,6 +76,68 @@ class FiltrateFilter(FilterSpec):
         """The content part of the filter in html."""
         raise NotImplementedError()
 
+class DateRangeFilter(FiltrateFilter):
+    
+    class Media():
+        js = (
+            'https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/jquery-ui.min.js',
+            'http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/i18n/jquery-ui-i18n.min.js',
+            'filtrate/js/daterangefilter.js',
+        )
+        css = { 'all': ('http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/themes/flick/jquery-ui.css',) }
+    
+    def _get_form(self, field_name):
+        """
+        Returns form with from and to fields. The '__alt' fields are alternative
+        fields with the correct non localized dateform needed for Django, 
+        handled by jsTree.
+        """
+        from_name = self.field_name + '__gte' 
+        to_name = self.field_name + '__lte'
+        
+        display_widget = Input(attrs={'class': 'filtrate_date'})
+        hidden_widget = HiddenInput(attrs={'class': 'filtrate_date_hidden'})
+        def add_fields(fields, name, label):
+            fields[name + '__alt'] = f.CharField(label=label, 
+                                          widget=display_widget, required=False)
+            fields[name] = f.CharField(widget=hidden_widget, required=False)
+        
+        def add_data(data, name, request):
+            date = request.GET.get(name)
+            if date:
+                data[name + '__alt'] = date_format(datetime.strptime(date, 
+                                                                    '%Y-%m-%d'))
+                
+        class DateRangeForm(f.Form):
+            def __init__(self, *args, **kwargs):
+                super(DateRangeForm, self).__init__(*args, **kwargs)
+                add_fields(self.fields, from_name, _('From'))
+                add_fields(self.fields, to_name, _('To'))
+                
+        data = {}
+        add_data(data, from_name, self.request)
+        add_data(data, to_name, self.request)
+        return DateRangeForm(data=data)
+
+    def get_content(self):
+        form = self._get_form(self.field_name)
+        return mark_safe(u"""
+            <script>
+                var filtrate = filtrate || {};
+                filtrate.language_code = '%(language_code)s';
+            </script>
+            <form class="filtrate_daterange_form" method="get">
+                %(form)s
+            <input type="submit" value="%(submit)s" />
+            %(get_params)s
+            </form>
+        """ % ({
+            'form': form.as_p(),
+            'submit': _('Apply filter'),
+            'language_code': settings.LANGUAGE_CODE[:2],
+            'get_params': self._form_duplicate_getparams(form.fields.keys()),
+        }))
+
 class TreeFilter(FiltrateFilter):
     """
     A tree filter for models. Uses the jsTree jQuery plugin found at 
@@ -73,7 +159,13 @@ class TreeFilter(FiltrateFilter):
         if not self.field_name:
             raise ImproperlyConfigured('The "field_name" class attribute '
                                        'must be implemented.')
-        
+     
+    class Media():
+        js = (
+            'filtrate/js/jstree/jquery.jstree.js',
+            'filtrate/js/filtertree.js',
+        )
+       
     def _tree_to_json(self, tree):
         """Recusively walks through the tree and generate json in a format
         suitable for jsTree.""" 
@@ -116,7 +208,7 @@ class TreeFilter(FiltrateFilter):
                 </form>
             </div>
         """ % (self._tree_to_json(self.get_tree()), self.field_name, 
-               self._form_duplicate_getparams()))
+               self._form_duplicate_getparams((self.field_name,))))
     
     # Must be overridden.
     

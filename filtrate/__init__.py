@@ -18,4 +18,3 @@ def register_filter(field, filter):
         callback = lambda f: getattr(f, unique_name, False)
         FilterSpec.filter_specs.insert(0, (callback, filter))
         setattr(field, unique_name, True)
-        
