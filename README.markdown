@@ -7,7 +7,7 @@ The base class that adds support for custom html in the content of the filter
 and for using `Media()` classes.
 
 ## TreeFilter ##
-A recursive tree filter using the excellent library. http://www.jstree.com/. 
+A recursive tree filter using the excellent library http://www.jstree.com/. 
 
 ### Example ###
 ```python
@@ -59,7 +59,7 @@ class Case(Model):
 
 * Clone the repo and symlink or copy the "filtrate" folder to your apps folder.
 * Add `filtrate` to your installed apps.
-* Add the "filtrate/templates" to your template dirs.
+* Add the "filtrate/templates" folder to your template folders.
 
 ### Static files ###
 
