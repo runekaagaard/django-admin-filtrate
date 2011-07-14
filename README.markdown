@@ -2,6 +2,8 @@
 This Django app makes it easier to create custom filters in the change list of
 Django Admin and supplies a `TreeFilter` and a `DateRangeFilter` too. Se below.
 
+Tested on Django 1.2.3 but 1.3 support is coming too thx to TimFletcher.
+
 ## The FiltrateFilter ##
 The base class that adds support for custom html in the content of the filter
 and for using `Media()` classes.
