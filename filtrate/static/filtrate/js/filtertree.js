@@ -3,6 +3,7 @@ if (typeof jQuery === 'undefined') jQuery = django.jQuery;
 
 (function($) { $(function() {
 	"use strict";
+	if (!filtrate.is_active()) return;
 	var path = 'div.filtrate div.content > div.treefilter'; 
 	$(path + ' > textarea').each(function() {
 		var tree = $(this).parent().find('form > div.tree');
