@@ -92,8 +92,8 @@ class DateRangeFilter(FiltrateFilter):
         fields with the correct non localized dateform needed for Django, 
         handled by jsTree.
         """
-        from_name = self.field_name + '__gte' 
-        to_name = self.field_name + '__lte'
+        from_name = field_name + '__gte' 
+        to_name = field_name + '__lte'
         
         display_widget = Input(attrs={'class': 'filtrate_date'})
         hidden_widget = HiddenInput(attrs={'class': 'filtrate_date_hidden'})
@@ -120,7 +120,7 @@ class DateRangeFilter(FiltrateFilter):
         return DateRangeForm(data=data)
 
     def get_content(self):
-        form = self._get_form(self.field_name)
+        form = self._get_form(self.field.name)
         return mark_safe(u"""
             <script>
                 var filtrate = filtrate || {};
