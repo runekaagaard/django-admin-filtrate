@@ -21,9 +21,9 @@ class FiltrateFilter(FilterSpec):
     
     Requires the altered template for "filter.html".
     """
-    def __init__(self, f, request, params, model, model_admin):
+    def __init__(self, f, request, params, model, model_admin, field_path=None):
         super(FiltrateFilter, self).__init__(f, request, params, model, 
-                                             model_admin)
+                                             model_admin, field_path=field_path)
         self._add_media(model_admin)
         self.request = request
         self.params = params
@@ -97,6 +97,7 @@ class DateRangeFilter(FiltrateFilter):
         
         display_widget = Input(attrs={'class': 'filtrate_date'})
         hidden_widget = HiddenInput(attrs={'class': 'filtrate_date_hidden'})
+
         def add_fields(fields, name, label):
             fields[name + '__alt'] = f.CharField(label=label, 
                                           widget=display_widget, required=False)
@@ -105,8 +106,7 @@ class DateRangeFilter(FiltrateFilter):
         def add_data(data, name, request):
             date = request.GET.get(name)
             if date:
-                data[name + '__alt'] = date_format(datetime.strptime(date, 
-                                                                    '%Y-%m-%d'))
+                data[name + '__alt'] = date
                 
         class DateRangeForm(f.Form):
             def __init__(self, *args, **kwargs):
