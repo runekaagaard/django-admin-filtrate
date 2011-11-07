@@ -1,8 +1,10 @@
 (function($, that) { $(function() {
 	if (!filtrate.is_active() 
-	    || typeof that.filtrate.language_code === 'undefined') return;
-	var regional = $.datepicker.regional[that.filtrate.language_code];
-	regional['dateFormat'] = formats['DATE_FORMAT'];
+	    || typeof that.filtrate.datepicker_region === 'undefined') return;
+	
+	var regional = $.datepicker.regional[that.filtrate.datepicker_region];
+	regional['dateFormat'] = that.filtrate.datepicker_date_format;
+
 	$('input.filtrate_date').datepicker(regional);
 
 	$('input.filtrate_date').each(function() {

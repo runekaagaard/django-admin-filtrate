@@ -13,6 +13,8 @@ from django.template.defaultfilters import date
 from django.utils.formats import date_format
 from django.conf import settings
 
+from filtrate import settings
+
 class FiltrateFilter(FilterSpec):
     """
     The base django_admin_filtrate filter. It requires overriding of 
@@ -21,9 +23,9 @@ class FiltrateFilter(FilterSpec):
     
     Requires the altered template for "filter.html".
     """
-    def __init__(self, f, request, params, model, model_admin):
+    def __init__(self, f, request, params, model, model_admin, field_path=None):
         super(FiltrateFilter, self).__init__(f, request, params, model, 
-                                             model_admin)
+                                             model_admin, field_path=None)
         self._add_media(model_admin)
         self.request = request
         self.params = params
@@ -41,7 +43,7 @@ class FiltrateFilter(FilterSpec):
         
         media = _get_media(model_admin) + _get_media(FiltrateFilter)\
                 + _get_media(self)
-                
+
         for name in MEDIA_TYPES:
             setattr(model_admin.Media, name, getattr(media, "_" + name))
         
@@ -124,7 +126,8 @@ class DateRangeFilter(FiltrateFilter):
         return mark_safe(u"""
             <script>
                 var filtrate = filtrate || {};
-                filtrate.language_code = '%(language_code)s';
+                filtrate.datepicker_region = '%(datepicker_region)s';
+                filtrate.datepicker_date_format = '%(datepicker_date_format)s';
             </script>
             <form class="filtrate_daterange_form" method="get">
                 %(form)s
@@ -134,7 +137,8 @@ class DateRangeFilter(FiltrateFilter):
         """ % ({
             'form': form.as_p(),
             'submit': _('Apply filter'),
-            'language_code': settings.LANGUAGE_CODE[:2],
+            'datepicker_region': settings.FILTRATE['datepicker_region'],
+            'datepicker_date_format': settings.FILTRATE['datepicker_date_format'],
             'get_params': self._form_duplicate_getparams(form.fields.keys()),
         }))
 
