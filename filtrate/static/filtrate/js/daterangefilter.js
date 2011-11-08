@@ -22,8 +22,19 @@
 		}
 	});
 	
+	/**
+	 * When the submit button is clicked, we disable all the __alt fields so
+	 * they wont get submitted. We also disable fields whose alt __alt fields
+	 * are empty.
+	 */
 	$('form.filtrate_daterange_form input[type=submit]').click(function() {
-		$(this).parent().find('.filtrate_date').attr('disabled', 'disabled');
+		$(this).parent().find('.filtrate_date_hidden').each(function() {
+			var datepicker = $('#' + $(this).attr('id') + '__alt');
+			if (datepicker.val() === "") {
+				$(this).attr('disabled', 'disabled');	
+			}
+			datepicker.attr('disabled', 'disabled');
+		});
 	});
 	
 });})(jQuery || django.jQuery, this);
