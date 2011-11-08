@@ -3,12 +3,17 @@ from django.db import models
 from filtrate import register_filter
 from filtrate.filters import DateRangeFilter
 
-class CaseDateRangeFilter(DateRangeFilter):
-    field_name = 'start_date'
+class CaseClientDateRangeFilter(DateRangeFilter):
+    field_name = 'client__start_date'
 
     def get_title(self):
-        return "By case start date"
+        return "By clients start date"
+
+class Client(models.Model):
+    start_date = models.DateField()
+    name = models.CharField(max_length=80)
 
 class Case(models.Model):
-	start_date = models.DateField()
-	register_filter(start_date, CaseDateRangeFilter)
+    client = models.ForeignKey(Client)
+    register_filter(client, CaseClientDateRangeFilter)
+    

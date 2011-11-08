@@ -7,7 +7,8 @@ from django.utils.safestring import mark_safe
 from django.utils.datastructures import MultiValueDictKeyError
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import ugettext_lazy as _
-from django.forms.widgets import Media, MEDIA_TYPES, Input, HiddenInput
+from django.forms.widgets import Media, MEDIA_TYPES, Input, HiddenInput,\
+    MediaDefiningClass
 from django import forms as f
 from django.template.defaultfilters import date
 from django.utils.formats import date_format
@@ -23,30 +24,29 @@ class FiltrateFilter(FilterSpec):
     
     Requires the altered template for "filter.html".
     """
-    def __init__(self, f, request, params, model, model_admin, field_path=None):
+    def __init__(self, f, request, params, model, model_admin, **kwargs):
         super(FiltrateFilter, self).__init__(f, request, params, model, 
-                                             model_admin, field_path=None)
+                                             model_admin, **kwargs)
         self._add_media(model_admin)
         self.request = request
         self.params = params
         self.model = model
         self.model_admin = model_admin
         
-    
     class Media():
         js = ( 'filtrate/js/filtrate.js',)
         css = { 'all': ('filtrate/css/filtrate.css',) }
-        
+    
     def _add_media(self, model_admin):
         def _get_media(obj):
             return Media(media=getattr(obj, 'Media', None))
         
         media = _get_media(model_admin) + _get_media(FiltrateFilter)\
                 + _get_media(self)
-
+        
         for name in MEDIA_TYPES:
             setattr(model_admin.Media, name, getattr(media, "_" + name))
-        
+            
     def _form_duplicate_getparams(self, omitted_fields):
         """Replicates the get parameters as hidden form fields."""
         s = '<input type="hidden" name="%s" value="%s"/>'
@@ -106,9 +106,9 @@ class DateRangeFilter(FiltrateFilter):
         
         def add_data(data, name, request):
             date = request.GET.get(name)
+            
             if date:
-                data[name + '__alt'] = date_format(datetime.strptime(date, 
-                                                                    '%Y-%m-%d'))
+                data[name + '__alt'] = date
                 
         class DateRangeForm(f.Form):
             def __init__(self, *args, **kwargs):
@@ -151,9 +151,9 @@ class TreeFilter(FiltrateFilter):
     `get_tree()`.
     """
     
-    def __init__(self, f, request, params, model, model_admin):
+    def __init__(self, f, request, params, model, model_admin, **kwargs):
         super(TreeFilter, self).__init__(f, request, params, model, 
-                                             model_admin)
+                                             model_admin, **kwargs)
         try:
             self.selected_nodes = self.request.GET.__getitem__(
                                                      self.field_name).split(",")

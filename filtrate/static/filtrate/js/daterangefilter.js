@@ -4,13 +4,22 @@
 	
 	var regional = $.datepicker.regional[that.filtrate.datepicker_region];
 	regional['dateFormat'] = that.filtrate.datepicker_date_format;
-
-	$('input.filtrate_date').datepicker(regional);
-
-	$('input.filtrate_date').each(function() {
-		var id = $(this).attr('id').replace('__alt', '');
-		$(this).datepicker("option", "altField", "#" + id);
-		$(this).datepicker("option", "altFormat", 'yy-mm-dd');
+	
+	$('input.filtrate_date_hidden').each(function() {
+		var datepicker = $('#' + $(this).attr('id') + '__alt');
+		regional['altField'] = $(this);
+		regional['altFormat'] = 'yy-mm-dd';
+		datepicker.datepicker(regional);
+		
+		// One would expect datepicker to update the alternate field 
+		// automatically, but apparently it doesn't. It's probably me missing
+		// something. Update it manually instead.
+		if (datepicker.val() !== "") {
+			var parts = datepicker.val().split('-');
+			datepicker.datepicker("setDate", new Date (Number(parts[0]), 
+													   Number(parts[1]-1), 
+				                                       Number(parts[2])));
+		}
 	});
 	
 	$('form.filtrate_daterange_form input[type=submit]').click(function() {
