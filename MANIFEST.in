@@ -1,0 +1,2 @@
+include README.markdown
+recursive-include filtrate *.py *.js *.css *.jpg *.png *.gif *.html
