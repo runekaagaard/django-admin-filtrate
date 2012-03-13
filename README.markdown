@@ -71,7 +71,8 @@ class CompanyDepartmentFilter(TreeFilter):
 from filtrate import register_filter
 class Case(Model):
     ...
-    register_filter(field_name, CompanyDepartmentFilter)
+    client = models.ForeignField(Client)
+    register_filter(client, CompanyDepartmentFilter)
 	...
 ```
 
@@ -92,8 +93,9 @@ class CaseLicenseStartDateFilter(DateRangeFilter):
 # The model.
 from filtrate import register_filter
 class Case(Model):
-    ...
-    register_filter(field_name, CaseLicenseStartDateFilter)
+	...
+    caselicense = models.ForeignField(Licence)
+    register_filter(caselicense, CaseLicenseStartDateFilter)
 	...
 ```
 
