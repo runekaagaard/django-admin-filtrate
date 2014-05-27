@@ -82,11 +82,11 @@ class DateRangeFilter(FiltrateFilter):
     
     class Media():
         js = (
-            'https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/jquery-ui.min.js',
-            'http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/i18n/jquery-ui-i18n.min.js',
+            '//ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/jquery-ui.min.js',
+            '//ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/i18n/jquery-ui-i18n.min.js',
             'filtrate/js/daterangefilter.js',
         )
-        css = { 'all': ('http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/themes/flick/jquery-ui.css',) }
+        css = { 'all': ('//ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/themes/flick/jquery-ui.css',) }
     
     def _get_form(self, field_name):
         """
