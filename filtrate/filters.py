@@ -1,22 +1,17 @@
 import json
-from datetime import datetime
 
-from django.contrib.admin.filterspecs import FilterSpec
+from django.contrib.admin.filters import ChoicesFieldListFilter
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.datastructures import MultiValueDictKeyError
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import ugettext_lazy as _
-from django.forms.widgets import Media, MEDIA_TYPES, Input, HiddenInput,\
-    MediaDefiningClass
+from django.forms.widgets import Media, MEDIA_TYPES, Input, HiddenInput
 from django import forms as f
-from django.template.defaultfilters import date
-from django.utils.formats import date_format
-from django.conf import settings
 
 from filtrate import settings
 
-class FiltrateFilter(FilterSpec):
+class FiltrateFilter(ChoicesFieldListFilter):
     """
     The base django_admin_filtrate filter. It requires overriding of 
     `get_title()` and `get_content()` methods. If your are using a form, adding 
@@ -32,6 +27,8 @@ class FiltrateFilter(FilterSpec):
         self.params = params
         self.model = model
         self.model_admin = model_admin
+        # Triggers the alternate rendering in "filter.html".
+        self.title = '__filtrate__'
         
     class Media():
         js = ( 'filtrate/js/filtrate.js',)
@@ -53,11 +50,7 @@ class FiltrateFilter(FilterSpec):
         _omitted_fields = tuple(omitted_fields) + ('e',)
         return "".join([s % (k,v) for k,v in self.request.GET.iteritems() 
                         if k not in _omitted_fields])
-        
-    def title(self):
-        """Triggers the alternate rendering in "filter.html"."""
-        return '__filtrate__'
-    
+
     def choices(self, cl):
         """As only title and choices is passed to "filter.html" template, we
         sets title to "__filtrate__" and passes real title and content from 
