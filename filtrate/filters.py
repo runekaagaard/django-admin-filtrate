@@ -1,6 +1,7 @@
 import json
 
-from django.contrib.admin.filters import ChoicesFieldListFilter
+from django.contrib.admin.filters import ChoicesFieldListFilter, \
+    SimpleListFilter
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.datastructures import MultiValueDictKeyError
@@ -11,7 +12,7 @@ from django import forms as f
 
 from filtrate import settings
 
-class FiltrateFilter(ChoicesFieldListFilter):
+class FiltrateFilter(SimpleListFilter):
     """
     The base django_admin_filtrate filter. It requires overriding of 
     `get_title()` and `get_content()` methods. If your are using a form, adding 
@@ -19,16 +20,17 @@ class FiltrateFilter(ChoicesFieldListFilter):
     
     Requires the altered template for "filter.html".
     """
-    def __init__(self, f, request, params, model, model_admin, **kwargs):
-        super(FiltrateFilter, self).__init__(f, request, params, model, 
-                                             model_admin, **kwargs)
+    template = 'filtrate/filter.html'
+    title = 'Efter afdeling'
+    def __init__(self, request, params, model, model_admin):
         self._add_media(model_admin)
         self.request = request
         self.params = params
         self.model = model
         self.model_admin = model_admin
         # Triggers the alternate rendering in "filter.html".
-        self.title = '__filtrate__'
+        super(FiltrateFilter, self).__init__(request, params, model,
+                                             model_admin)
         
     class Media():
         js = ( 'filtrate/js/filtrate.js',)
@@ -51,28 +53,30 @@ class FiltrateFilter(ChoicesFieldListFilter):
         return "".join([s % (k,v) for k,v in self.request.GET.iteritems() 
                         if k not in _omitted_fields])
 
+    def lookups(self, request, model_admin):
+        return [('_', '_')]
+
     def choices(self, cl):
         """As only title and choices is passed to "filter.html" template, we
-        sets title to "__filtrate__" and passes real title and content from 
-        here. 
+        sets title to "__filtrate__" and passes real title and content from
+        here.
         """
         return [{
             'title': self.get_title(),
             'content': self.get_content(),
         }]
     
-    # Must be overridden.
-    
     def get_title(self):
-        """The title of the filter. Must include "After" in the beginning."""
-        raise NotImplementedError()
+        return self.title
     
     def get_content(self):
         """The content part of the filter in html."""
         raise NotImplementedError()
 
+    def queryset(self, request, queryset):
+        return queryset
+
 class DateRangeFilter(FiltrateFilter):
-    
     class Media():
         js = (
             '//ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/jquery-ui.min.js',
@@ -87,8 +91,8 @@ class DateRangeFilter(FiltrateFilter):
         fields with the correct non localized dateform needed for Django, 
         handled by jsTree.
         """
-        from_name = self.field_name + '__gte' 
-        to_name = self.field_name + '__lte'
+        from_name = self.parameter_name + '__gte'
+        to_name = self.parameter_name + '__lte'
         
         display_widget = Input(attrs={'class': 'filtrate_date'})
         hidden_widget = HiddenInput(attrs={'class': 'filtrate_date_hidden'})
@@ -115,8 +119,8 @@ class DateRangeFilter(FiltrateFilter):
         return DateRangeForm(data=data)
 
     def get_content(self):
-        form = self._get_form(self.field_name)
-        return mark_safe(u"""
+        form = self._get_form(self.parameter_name)
+        return mark_safe(u"""xxxx
             <script>
                 var filtrate = filtrate || {};
                 filtrate.datepicker_region = '%(datepicker_region)s';
@@ -140,22 +144,18 @@ class TreeFilter(FiltrateFilter):
     A tree filter for models. Uses the jsTree jQuery plugin found at 
     http://www.jstree.com/ in the frontend.
     
-    Overiding classes needs to implement `field_name`, `get_title()` and 
+    Overiding classes needs to implement `parameter_name`, `title`, and
     `get_tree()`.
     """
     
-    def __init__(self, f, request, params, model, model_admin, **kwargs):
-        super(TreeFilter, self).__init__(f, request, params, model, 
-                                             model_admin, **kwargs)
+    def __init__(self, request, params, model, model_admin):
+        super(TreeFilter, self).__init__(request, params, model, model_admin)
         try:
             self.selected_nodes = self.request.GET.__getitem__(
-                                                     self.field_name).split(",")
+                                                     self.parameter_name).split(",")
             self.selected_nodes = map(int, self.selected_nodes)
         except MultiValueDictKeyError:
             self.selected_nodes = []
-        if not self.field_name:
-            raise ImproperlyConfigured('The "field_name" class attribute '
-                                       'must be implemented.')
      
     class Media():
         js = (
@@ -183,7 +183,7 @@ class TreeFilter(FiltrateFilter):
                     cur_tree.append({
                         "attr" : { 
                             "obj_id": node.pk, 
-                            "is_selected": node.pk in self.selected_nodes, 
+                            #"is_selected": node.pk in self.selected_nodes,
                         },                   
                         'data': force_unicode(node),
                     })
@@ -204,19 +204,8 @@ class TreeFilter(FiltrateFilter):
                     %s
                 </form>
             </div>
-        """ % (self._tree_to_json(self.get_tree()), self.field_name, 
-               self._form_duplicate_getparams((self.field_name,))))
-    
-    # Must be overridden.
-    
-    # The POST field name with the trailing '__in'.
-    # I.E. "client__department__id__in". The objects returned from `get_tree()`
-    # should fit with this.
-    field_name = None
-    
-    def get_title(self):
-        """The title of the filter. Must include "After" in the beginning."""
-        raise NotImplementedError()
+        """ % (self._tree_to_json(self.get_tree()), self.parameter_name,
+               self._form_duplicate_getparams((self.parameter_name,))))
     
     def get_tree(self):
         """

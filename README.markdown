@@ -102,7 +102,7 @@ class Case(Model):
 ## Installation ##
 
 * Clone the repo and symlink or copy the "filtrate" folder to your apps folder.
-* Add `filtrate` to your installed apps.
+* Add `filtrate` to your installed apps, before `django.contrib.admin`.
 * Add the "filtrate/templates" folder to your template folders.
 
 ### Static files ###
