@@ -1,47 +1,46 @@
 import json
 
-from django.contrib.admin.filters import ChoicesFieldListFilter, \
-    SimpleListFilter
+from django.contrib.admin.filters import SimpleListFilter
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.datastructures import MultiValueDictKeyError
-from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import ugettext_lazy as _
 from django.forms.widgets import Media, MEDIA_TYPES, Input, HiddenInput
 from django import forms as f
 
 from filtrate import settings
 
+
 class FiltrateFilter(SimpleListFilter):
     """
-    The base django_admin_filtrate filter. It requires overriding of 
-    `get_title()` and `get_content()` methods. If your are using a form, adding 
-    `_form_duplicate_getparams()` inside the form html tags might come in handy.
-    
-    Requires the altered template for "filter.html".
+    The base django_admin_filtrate filter. It requires overriding of `title`,
+    `parameter_name`, `queryset()` and `get_content()`.
+
+    If your are using a form, adding `_form_duplicate_getparams()` inside the
+    form html tags might come in handy.
     """
     template = 'filtrate/filter.html'
     title = 'Efter afdeling'
+
     def __init__(self, request, params, model, model_admin):
         self._add_media(model_admin)
         self.request = request
         self.params = params
         self.model = model
         self.model_admin = model_admin
-        # Triggers the alternate rendering in "filter.html".
         super(FiltrateFilter, self).__init__(request, params, model,
                                              model_admin)
         
-    class Media():
-        js = ( 'filtrate/js/filtrate.js',)
-        css = { 'all': ('filtrate/css/filtrate.css',) }
+    class Media:
+        js = ('filtrate/js/filtrate.js',)
+        css = {'all': ('filtrate/css/filtrate.css',)}
     
     def _add_media(self, model_admin):
         def _get_media(obj):
             return Media(media=getattr(obj, 'Media', None))
         
-        media = _get_media(model_admin) + _get_media(FiltrateFilter)\
-                + _get_media(self)
+        media = (_get_media(model_admin) + _get_media(FiltrateFilter)
+                 + _get_media(self))
         
         for name in MEDIA_TYPES:
             setattr(model_admin.Media, name, getattr(media, "_" + name))
@@ -50,40 +49,55 @@ class FiltrateFilter(SimpleListFilter):
         """Replicates the get parameters as hidden form fields."""
         s = '<input type="hidden" name="%s" value="%s"/>'
         _omitted_fields = tuple(omitted_fields) + ('e',)
-        return "".join([s % (k,v) for k,v in self.request.GET.iteritems() 
+        return "".join([s % (k, v) for k, v in self.request.GET.iteritems()
                         if k not in _omitted_fields])
 
     def lookups(self, request, model_admin):
+        """
+        Fake lookups.
+        """
         return [('_', '_')]
 
     def choices(self, cl):
-        """As only title and choices is passed to "filter.html" template, we
-        sets title to "__filtrate__" and passes real title and content from
-        here.
+        """
+        Wrap title and content as the first choice.
         """
         return [{
-            'title': self.get_title(),
-            'content': self.get_content(),
+            'title': self.get_title(self.request),
+            'content': self.get_content(self.request),
         }]
     
-    def get_title(self):
+    def get_title(self, request):
+        """
+        Change the title dynamically.
+        """
         return self.title
     
-    def get_content(self):
-        """The content part of the filter in html."""
+    def get_content(self, request):
+        """
+        The content part of the filter in html.
+        """
         raise NotImplementedError()
 
     def queryset(self, request, queryset):
-        return queryset
+        """
+        Filter the queryset based on the request.
+        """
+        value = self.value()
+        if value is None:
+            return queryset
+        else:
+            return queryset.filter(**{self.parameter_name: value})
+
 
 class DateRangeFilter(FiltrateFilter):
-    class Media():
+    class Media:
         js = (
             '//ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/jquery-ui.min.js',
             '//ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/i18n/jquery-ui-i18n.min.js',
             'filtrate/js/daterangefilter.js',
         )
-        css = { 'all': ('//ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/themes/flick/jquery-ui.css',) }
+        css = {'all': ('//ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/themes/flick/jquery-ui.css',)}
     
     def _get_form(self, field_name):
         """
@@ -118,9 +132,9 @@ class DateRangeFilter(FiltrateFilter):
         add_data(data, to_name, self.request)
         return DateRangeForm(data=data)
 
-    def get_content(self):
+    def get_content(self, request):
         form = self._get_form(self.parameter_name)
-        return mark_safe(u"""xxxx
+        return mark_safe(u"""
             <script>
                 var filtrate = filtrate || {};
                 filtrate.datepicker_region = '%(datepicker_region)s';
@@ -139,6 +153,7 @@ class DateRangeFilter(FiltrateFilter):
             'get_params': self._form_duplicate_getparams(form.fields.keys()),
         }))
 
+
 class TreeFilter(FiltrateFilter):
     """
     A tree filter for models. Uses the jsTree jQuery plugin found at 
@@ -150,14 +165,12 @@ class TreeFilter(FiltrateFilter):
     
     def __init__(self, request, params, model, model_admin):
         super(TreeFilter, self).__init__(request, params, model, model_admin)
-        try:
-            self.selected_nodes = self.request.GET.__getitem__(
-                                                     self.parameter_name).split(",")
-            self.selected_nodes = map(int, self.selected_nodes)
-        except MultiValueDictKeyError:
+        if self.value() is not None:
+            self.selected_nodes = map(int, self.value().split(','))
+        else:
             self.selected_nodes = []
      
-    class Media():
+    class Media:
         js = (
             'filtrate/js/jstree/jquery.jstree.js',
             'filtrate/js/filtertree.js',
@@ -179,11 +192,10 @@ class TreeFilter(FiltrateFilter):
                     parse_tree(node[1], new_tree)
                 else:
                     # Is a leaf node.
-                    title = force_unicode(node)
                     cur_tree.append({
-                        "attr" : { 
+                        "attr": {
                             "obj_id": node.pk, 
-                            #"is_selected": node.pk in self.selected_nodes,
+                            "is_selected": node.pk in self.selected_nodes,
                         },                   
                         'data': force_unicode(node),
                     })
@@ -192,7 +204,7 @@ class TreeFilter(FiltrateFilter):
         parse_tree(tree, json_tree)
         return json.dumps(json_tree)
         
-    def get_content(self):
+    def get_content(self, request):
         """Return html for entire filter."""
         return mark_safe("""
             <div class="treefilter">
@@ -225,3 +237,9 @@ class TreeFilter(FiltrateFilter):
         ) 
         """
         raise NotImplementedError
+
+    def queryset(self, request, queryset):
+        if not self.selected_nodes:
+            return queryset
+        else:
+            return queryset.filter(**{self.parameter_name: self.selected_nodes})
