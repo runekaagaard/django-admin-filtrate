@@ -22,5 +22,5 @@ setup(
     license='MIT',
     url='https://github.com/runekaagaard/django-admin-filtrate',
     packages=find_packages(),
-    package_data = {'filtrate': ['templates/admin/*'] + static_files },
+    package_data = {'filtrate': ['templates/filtrate/*'] + static_files },
 )
