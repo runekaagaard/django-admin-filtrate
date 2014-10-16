@@ -2,9 +2,7 @@
 This Django app makes it easier to create custom filters in the change list of
 Django Admin and supplies a `TreeFilter` and a `DateRangeFilter` too. Se below.
 
-Tested on Django 1.2.3 and from @15ea9a9 1.3.1.
-
-## Updating to 1.4-1.7 support ##
+## About this branch ##
 
 There are no release yet, but a version tested with 1.4 and 1.7 can be installed with pip like:
 
