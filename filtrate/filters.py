@@ -162,6 +162,14 @@ class TreeFilter(FiltrateFilter):
     Overiding classes needs to implement `parameter_name`, `title`, and
     `get_tree()`.
     """
+
+    INCLUDE = 1 # The selected nodes are included in the query with ".filter()".
+    EXCLUDE = 2 # The selected nodes are excluded in the query with ".exclude()".
+    query_mode = INCLUDE
+    
+    # The keyword argument used in the Django ORM query. If None it defaults to
+    # the parameter_name.
+    query_name = None  
     
     def __init__(self, request, params, model, model_admin):
         super(TreeFilter, self).__init__(request, params, model, model_admin)
@@ -242,4 +250,11 @@ class TreeFilter(FiltrateFilter):
         if not self.selected_nodes:
             return queryset
         else:
-            return queryset.filter(**{self.parameter_name: self.selected_nodes})
+            query_name = self.parameter_name if self.query_name is None else self.query_name
+            kwargs = {query_name: self.selected_nodes}
+            if self.query_mode == self.INCLUDE:
+                return queryset.filter(**kwargs)
+            elif self.query_mode == self.EXCLUDE:
+                return queryset.exclude(**kwargs)
+            else:
+                raise Exception("Unknown query_mode given.")
