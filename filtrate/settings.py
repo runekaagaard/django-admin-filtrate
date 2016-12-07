@@ -5,9 +5,11 @@ FILTRATE = {
 	'datepicker_region': 'en-GB',
 	# See http://docs.jquery.com/UI/Datepicker/formatDate.
 	'datepicker_date_format': 'yy-mm-dd',
+	'include_jquery': True,
 }
 
 try:
 	FILTRATE.update(settings.FILTRATE)
 except AttributeError:
 	pass
+
