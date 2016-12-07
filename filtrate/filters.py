@@ -97,10 +97,10 @@ class DateRangeFilter(FiltrateFilter):
         )
 
         if settings.FILTRATE['include_jquery']:
-            js += (
+            js = (
                 '//ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/jquery-ui.min.js',
                 '//ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/i18n/jquery-ui-i18n.min.js',
-            )
+                 ) + js
             css = {'all': ('//ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/themes/flick/jquery-ui.css',)}
     
     def _get_form(self, field_name):
