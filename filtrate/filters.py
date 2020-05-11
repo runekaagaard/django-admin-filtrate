@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 
 from django.contrib.admin.filterspecs import FilterSpec
-from django.utils.encoding import force_unicode
+from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from django.utils.datastructures import MultiValueDictKeyError
 from django.core.exceptions import ImproperlyConfigured
@@ -177,7 +177,7 @@ class TreeFilter(FiltrateFilter):
             for node in tree:
                 if type(node) == type(tuple()):
                     # Is a parent node.
-                    title = force_unicode(node[0])
+                    title = force_text(node[0])
                     new_tree = []
                     cur_tree.append({
                         'data': title,
@@ -186,13 +186,13 @@ class TreeFilter(FiltrateFilter):
                     parse_tree(node[1], new_tree)
                 else:
                     # Is a leaf node.
-                    title = force_unicode(node)
+                    title = force_text(node)
                     cur_tree.append({
                         "attr" : { 
                             "obj_id": node.pk, 
                             "is_selected": node.pk in self.selected_nodes, 
                         },                   
-                        'data': force_unicode(node),
+                        'data': force_text(node),
                     })
 
         json_tree = []
