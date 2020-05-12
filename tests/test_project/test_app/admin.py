@@ -1,8 +1,10 @@
 from django.contrib import admin
 from test_app.models import Case, Client
+from test_app.models import CaseClientDateRangeFilter
+
 
 class CaseAdmin(admin.ModelAdmin):
-	list_filter = ['client']
+	list_filter = [('client', CaseClientDateRangeFilter)]
 
 	class Media(): 
 		pass
