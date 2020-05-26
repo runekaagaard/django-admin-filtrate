@@ -49,7 +49,8 @@ class FiltrateFilter(SimpleListFilter):
         """Replicates the get parameters as hidden form fields."""
         s = '<input type="hidden" name="%s" value="%s"/>'
         _omitted_fields = tuple(omitted_fields) + ('e',)
-        return "".join([s % (k, v) for k, v in self.request.GET.iteritems()
+        _keys = list(self.request.GET.keys())
+        return "".join([s % (k, v) for k, v in _keys
                         if k not in _omitted_fields])
 
     def lookups(self, request, model_admin):
