@@ -139,7 +139,7 @@ class DateRangeFilter(FiltrateFilter):
 
     def get_content(self, request):
         form = self._get_form(self.parameter_name)
-        return mark_safe(u"""
+        return mark_safe("""
             <script>
                 var filtrate = filtrate || {};
                 filtrate.datepicker_region = '%(datepicker_region)s';
@@ -155,7 +155,7 @@ class DateRangeFilter(FiltrateFilter):
             'submit': _('Apply filter'),
             'datepicker_region': settings.FILTRATE['datepicker_region'],
             'datepicker_date_format': settings.FILTRATE['datepicker_date_format'],
-            'get_params': self._form_duplicate_getparams(form.fields.keys()),
+            'get_params': self._form_duplicate_getparams(list(form.fields.keys())),
         }))
 
 
@@ -179,7 +179,7 @@ class TreeFilter(FiltrateFilter):
     def __init__(self, request, params, model, model_admin):
         super(TreeFilter, self).__init__(request, params, model, model_admin)
         if self.value() is not None:
-            self.selected_nodes = map(int, self.value().split(','))
+            self.selected_nodes = list(map(int, self.value().split(',')))
         else:
             self.selected_nodes = []
      
