@@ -6,7 +6,9 @@ Django Admin and supplies a `TreeFilter` and a `DateRangeFilter` too. Se below.
 
 Install with:
 
-    pip install git+git://github.com/runekaagaard/django-admin-filtrate@b3ca10ddaa4eb3912e32ff4561fb3e6be298b68b
+    pip install git+git://github.com/runekaagaard/django-admin-filtrate@8811bebb0f1985dfef599f65bcab923ba92ac9cc
+
+Thanks user zxl634 for python3 support!
 
 ## Updating to 1.4-1.7 support ##
 
