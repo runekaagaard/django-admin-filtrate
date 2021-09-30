@@ -1,0 +1,13 @@
+{% comment %}
+
+{% endcomment %}
+
+{% load i18n %}
+<div class="filtrate">
+	{% if choices.0.title %}
+		<h3>{{choices.0.title}}</h3>
+	{% endif %}
+	<div class="content">
+		{{choices.0.content}}
+	</div>
+</div>

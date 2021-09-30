@@ -1,6 +1,5 @@
 from django.db import models
 
-from filtrate import register_filter
 from filtrate.filters import DateRangeFilter
 
 class CaseClientDateRangeFilter(DateRangeFilter):
@@ -15,5 +14,3 @@ class Client(models.Model):
 
 class Case(models.Model):
     client = models.ForeignKey(Client)
-    register_filter(client, CaseClientDateRangeFilter)
-    
